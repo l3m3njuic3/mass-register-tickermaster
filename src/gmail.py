@@ -4,10 +4,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import random
 import string
-from time import sleep
-import requests
+import time
+from utils.utils import *
 
-#! TODO: proxy, sms verification, spoof user agent
+#! simulate human mouse movement
+#! check if browser history is part of requirements
 
 class Gmail:
     def __init__(self):
@@ -27,6 +28,7 @@ class Gmail:
             'confirm_password_input': '//*[@id="confirm-passwd"]/div[1]/div/div[1]/input',
             'password_next': '//*[@id="createpasswordNext"]/div/button'
         }
+        self.headless = False
     
     def generate_random_info(self) -> dict:
         """
@@ -42,9 +44,9 @@ class Gmail:
         info = {
             'firstname': firstname,
             'gmail': f'{firstname}@gmail.com',
-            'birth_day': random.randint(1, 28),
+            'birth_day': str(random.randint(1, 28)),
             'birth_month': random.randint(1, 12),
-            'birth_year': random.randint(1970, 2000),
+            'birth_year': str(random.randint(1970, 2000)),
             'gender': random.randint(2, 3), # 1 is male, 2 is female
             'password': firstname + '@password'
         }
@@ -57,8 +59,12 @@ class Gmail:
         """
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_experimental_option('excludeSwitches', ['enable-logging']) # disable logging 
-        # chrome_options.add_argument('--headless') # set headless so that it runs in the background
-
+        
+        if self.headless:
+            chrome_options.add_argument('--headless') # set headless so that it runs in the background
+            
+        chrome_options.add_argument(r'--user-data-dir=C:\Users\laijj\AppData\Local\Google\Chrome\User Data')
+        
         self.driver = webdriver.Chrome(options=chrome_options)
         self.driver.get(self.url)
     
@@ -71,7 +77,7 @@ class Gmail:
         """
         element = WebDriverWait(self.driver, 8).until(
             EC.presence_of_element_located((By.XPATH, selector))
-        )
+        )        
         element.click()
     
     def send_keys(self, selector, data):
@@ -83,57 +89,62 @@ class Gmail:
             data (str/int): Data to pass
         """
         element = WebDriverWait(self.driver, 8).until(
-                EC.presence_of_element_located((By.XPATH, selector))
-            )
-        element.send_keys(data)
+            EC.presence_of_element_located((By.XPATH, selector))
+        )
+        
+        # simulate human typing
+        human_type(message=data, element=element)
     
-    def number_verification(self):
-        pass
-    
-    def create_gmail(self):
+    def create_gmail(self, count):
         """
         Navigates the browser session
         """
-        self.open_browser()
-        info = self.generate_random_info()
-        
-        # fill in first name        
-        self.send_keys(selector=self.SELECTORS['firstname_input'], data=info['firstname'])
-        
-        # go to the next page
-        self.click_element(selector=self.SELECTORS['firstname_next'])
-        
-        # fill in birth day
-        self.send_keys(selector=self.SELECTORS['birth_day_input'], data=info['birth_day'])
-        
-        # fill in birth month
-        self.click_element(selector=self.SELECTORS['birth_month_select']) # click on the dropdown
-        self.click_element(selector=f'{self.SELECTORS["birth_month_select"]}/option[{info["birth_month"]}]')
-        
-        # fill in birth year
-        self.send_keys(selector=self.SELECTORS['birth_year_input'], data=info['birth_year'])
-        
-        # fill in gender
-        self.click_element(selector=self.SELECTORS['gender']) # click on the dropdown
-        self.click_element(selector=f'{self.SELECTORS["gender"]}/option[{info["gender"]}]')
-        
-        # go to the next page
-        sleep(1) # else bot might not have enough time to click on the dropdown
-        self.click_element(selector=self.SELECTORS['birthdaygender_next'])
-        
-        # create gmail using firstname
-        self.click_element(selector=self.SELECTORS['create_own_address'])
-        self.send_keys(selector=self.SELECTORS['address_input'], data=info['firstname'])
-        
-        # go to the next page
-        self.click_element(selector=self.SELECTORS['address_next'])
-        
-        # fill in password and confirm password
-        self.send_keys(selector=self.SELECTORS['password_input'], data=info['password'])
-        self.send_keys(selector=self.SELECTORS['confirm_password_input'], data=info['password'])
-        
-        # go to the next page
-        self.click_element(selector=self.SELECTORS['password_next'])
-        
-        while True:
-            pass
+        for _ in range(count):
+            self.open_browser()
+            info = self.generate_random_info()
+            
+            # fill in first name        
+            self.send_keys(selector=self.SELECTORS['firstname_input'], data=info['firstname'])
+            
+            # go to the next page
+            self.click_element(selector=self.SELECTORS['firstname_next'])
+            
+            # fill in birth day
+            self.send_keys(selector=self.SELECTORS['birth_day_input'], data=info['birth_day'])
+            
+            # fill in birth month
+            self.click_element(selector=self.SELECTORS['birth_month_select']) # click on the dropdown
+            self.click_element(selector=f'{self.SELECTORS["birth_month_select"]}/option[{info["birth_month"]}]')
+            
+            # fill in birth year
+            self.send_keys(selector=self.SELECTORS['birth_year_input'], data=info['birth_year'])
+            
+            # fill in gender
+            self.click_element(selector=self.SELECTORS['gender']) # click on the dropdown
+            self.click_element(selector=f'{self.SELECTORS["gender"]}/option[{info["gender"]}]')
+            
+            # go to the next page
+            time.sleep(1) # else bot might not have enough time to click on the dropdown
+            self.click_element(selector=self.SELECTORS['birthdaygender_next'])
+            
+            # create gmail using firstname
+            self.click_element(selector=self.SELECTORS['create_own_address'])
+            self.send_keys(selector=self.SELECTORS['address_input'], data=info['firstname'])
+            
+            # go to the next page
+            self.click_element(selector=self.SELECTORS['address_next'])
+            
+            # fill in password and confirm password
+            self.send_keys(selector=self.SELECTORS['password_input'], data=info['password'])
+            self.send_keys(selector=self.SELECTORS['confirm_password_input'], data=info['password'])
+            
+            # go to the next page
+            self.click_element(selector=self.SELECTORS['password_next'])
+            
+            # write accounts created to text file
+            data = f'{info["firstname"]}@gmail.com,{info["password"]} \n'
+            self.writedown(data=data)
+    
+    def writedown(self, data):
+        with open('gmail_accounts.txt', 'a+') as outfile:
+            outfile.write(data)

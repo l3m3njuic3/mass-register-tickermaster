@@ -1,4 +1,7 @@
-from gmail import Gmail
+from src.gmail import Gmail
 
+# create a gmail session 
 session = Gmail()
-session.create_gmail()
+
+# create gmails
+session.create_gmail(count=10)
